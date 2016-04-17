@@ -1,0 +1,46 @@
+{
+        "controllerset":
+
+                        [{
+                        "controllername_id":"Saturation Colt",
+                        "probeset":[{
+                                  "probename_id":"coltin",
+                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  },{
+                                  "probename_id":"coltout",
+                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  }],
+                          "logging":"yes",
+                          "condition":"(coltin >= 18) and (coltout >= 18)",
+                          "expected_value":"1",
+                          "action_true": "",
+                          "action_false": "",
+                          "rollback_after": 1,
+                          "rollback_action": ""
+                        },{
+                        "controllername_id":"Saturation Colt2",
+                        "probeset":[{
+                                  "probename_id":"coltin2",
+                                  "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  },{
+                                  "probename_id":"coltout2",
+                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  }],
+                          "logging":"yes",
+                          "condition":"(coltin >= 18) and (coltout >= 18)",
+                          "expected_value":"1",
+                          "action_true": "",
+                          "action_false": "",
+                          "rollback_after": 1,
+                          "rollback_action": ""
+                        }]
+
+}
