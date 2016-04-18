@@ -11,23 +11,26 @@ import commands
 import collections
 import logging
 from or_class import *
-
+import MySQLdb
 
 #Global definitions
 global configfile #path of configfile
-
+global databasefile
 
 global ctrl_obj
 global probe_obj
+global database_obj
 global startuplist
 global msg
 
 
 #Configfile
 configfile="controller.json"
+databasefile="database.json"
 #controller
 ctrl_obj = []
 probe_obj = []
+database_obj = []
 startuplist = {}
 
 
@@ -40,6 +43,9 @@ def t_controllercounter(val):
 def t_probecounter(val):
     global probecounter
     probecounter=val
+
+
+
 
 # progressbar
 def progressbar(count, total, suffix=''):
@@ -70,7 +76,7 @@ def banner():
 
 
 # loadconfig
-def loadconfig( configfile ):
+def loadconfig( jsonfile ):
 
         #In-ram configuration
         global inram_configuration
@@ -78,16 +84,16 @@ def loadconfig( configfile ):
         try:
 
 
-           with open(configfile) as data_file:
+           with open(jsonfile) as data_file:
                inram_configuration = json.load(data_file)
 
         except IOError as e:
 
-            print "\nno go:We got a probelm..I'm looking for +configfile+ but I can't find th file for please check.\n"
+            print "\nno go:We got a probelm..I'm looking for "+jsonfile+" but I can't find th file for please check.\n"
 
         except:
 
-            print "\nno go:The json file is not correct , please check the syntax and/or file logic\n"
+            print "\nno go:The "+jsonfile+" file is not correct , please check the syntax and/or file logic\n"
             raise
 
         return True
@@ -131,7 +137,21 @@ def checkduplicatesprobe(pid):
     k +=1
 
 
+def checkduplicatesdatabase(did):
 
+    d=0
+
+    for k in range(0,dbcounter):
+
+
+
+        if did == database_obj[k].database_id:
+
+                d+=1
+                if d > 1:
+                    print "\n\nnogo: The database_id must be unique , I have found some duplicates on "+database_obj[k].database_id
+                    return True
+    k +=1
 
 
 
@@ -200,6 +220,47 @@ def objectbuilder():
     return True
 
 
+
+
+def dbobjectbuilder():
+    global dbcounter
+
+    dbcounter = 0
+
+    try:
+
+
+
+        for row_ctrl in inram_configuration['databases']:
+
+
+            database_obj.append(Dbengine(
+            row_ctrl['database_id'],
+            row_ctrl['dbengine'],
+            row_ctrl['host'],
+            row_ctrl['database'],
+            row_ctrl['username'],
+            row_ctrl['password']
+            ,dbcounter))
+
+            dbcounter +=1
+
+
+        return True
+    except KeyError:
+
+            print "\n\nnogo: The configuration file "+configfile+" seem has logical corrupted prbably some fields are disappeared\n"
+
+    except:
+
+            print "\n\nnogo: oops some problem occured during validation checking process\n"
+    raise
+
+
+    return True
+
+
+
 def chkrange(c,val,min,max):
     if (val >= min) and (val <= max) :
         return True
@@ -208,11 +269,11 @@ def chkrange(c,val,min,max):
 
         return False
 
-def chkoptions(c,val,options):
+def chkoptions(c,val,options,attribute):
     if (val in options) and val:
         return True
     else:
-        print "\n\nnogo: The "+val+" of "+ctrl_obj[c].controllername_id+" controller needs to be "+options+"\n"
+        print "\n\nnogo: The "+attribute+" needs to be "+options+"\n"
 
         return False
 
@@ -250,7 +311,7 @@ def checklogiccontroller(c):
             return False
         else:
             options="yes,not"
-            if chkoptions(c,ctrl_obj[c].logging,options) == False:
+            if chkoptions(c,ctrl_obj[c].logging,options,'logging') == False:
                 return False
             else:
 
@@ -278,11 +339,6 @@ def checklogiccontroller(c):
 
 
 def checklogicprobe(i):
-#Start probe check
-
-
-
-
         if not (probe_obj[i].probename_id):
 
             print "\n\nnogo: The probename_id must be set"
@@ -330,6 +386,64 @@ def checklogicprobe(i):
                                 return True
 
 
+def checklogicdatabase(i):
+
+        if not(database_obj[i].database_id):
+
+            print "\n\nnogo: The database_id  must be set"
+            return False
+
+        else:
+
+            if checkduplicatesdatabase(database_obj[i].database_id) == True:
+                return False
+            else:
+                options="mysql,postgres,oracle,mssql"
+                if chkoptions(i,database_obj[i].dbengine,options,'dbengine') == False:
+                    return False
+                else:
+                    if database_obj[i].dbengine == "mysql":
+
+                            if not(database_obj[i].host)  or not(database_obj[i].database)  or not(database_obj[i].username)  or not(database_obj[i].password):
+
+                                print
+                                print
+                                print"no go:All database paramenters are necessary"
+                                return False
+
+                            else:
+                                return True
+                    else:
+                            print
+                            print
+                            print"no go:Only mysql is supported ad the moment, we are at work for others please fork me on https://github.com/ottacom/Radar-Reactive-Controller"
+
+                            return False
+
+
+
+
+def checkdbconnection(index):
+
+    try:
+        db = MySQLdb.connect(host=database_obj[index].host,
+                     user=database_obj[index].username,
+                     passwd=database_obj[index].password,
+                     db=database_obj[i].database)
+
+
+        cursor = db.cursor()
+        cursor.execute("SELECT VERSION()")
+        results = cursor.fetchone()
+        # Check if anything at all is returned
+        if results:
+            return True
+        else:
+            return False
+
+    except MySQLdb.Error:
+
+        return False
 
 
 
@@ -400,13 +514,45 @@ def main():
             quit()
     i +=1
 
+    #Configuring database
+    if loadconfig(databasefile) == True:
+            lastbar=lastbar+5;
+            progressbar(lastbar,100,'Loading database congfig file......        ')
+    else:
+        quit()
+
+    if dbobjectbuilder() == True:
+        lastbar=lastbar+5;
+        progressbar(lastbar+5,100,'Configuring database......             ')
+    else:
+        quit()
 
     i=0
-    lastbar=40
+
+    for i in range(0,dbcounter):
+
+        if checklogicdatabase(i) == True:
+            lastbar=lastbar+5/dbcounter;
+            progressbar(lastbar+(20/dbcounter)*i,100,'Check logic database.......          ')
+        else:
+            quit()
+    i +=1
 
 
+    i=0
 
-            
+
+    for i in range(0,dbcounter):
+
+        if checkdbconnection(i) == True:
+
+            lastbar=lastbar+5/dbcounter;
+            progressbar(lastbar+(20/dbcounter)*i,100,'Check database connectivities.......          ')
+
+        else:
+            quit()
+    i +=1
+
     print
     print
     print

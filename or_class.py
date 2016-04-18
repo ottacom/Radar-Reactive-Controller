@@ -12,7 +12,7 @@ class Controller(object):
     rollback_action = "nop"
 
 
-#Pay attention to the order
+
     def __init__(self,controllername_id,logging, condition, expected_value,action_true,action_false,rollback_after,rollback_action,totalprobes,index):
 
 
@@ -30,14 +30,11 @@ class Controller(object):
 
 
 
-
-#Defining probes
 class Probe(object):
 
         probename_id = ""
         sql = ""
 
-#Pay attention to the order
 
 
         def __init__(self,probename_id,sql,sqlengine,probefile,controllerindex,probeindex):
@@ -49,18 +46,15 @@ class Probe(object):
             self.probeindex = probeindex
 
 
-class Probe(object):
 
-        probename_id = ""
-        sql = ""
-
-#Pay attention to the order
+class Dbengine(object):
 
 
-        def __init__(self,probename_id,sql,sqlengine,probefile,controllerindex,probeindex):
-            self.probename_id = probename_id
-            self.sql = sql
-            self.sqlengine = sqlengine
-            self.probefile = probefile
-            self.controllerindex = controllerindex
-            self.probeindex = probeindex
+        def __init__(self,database_id,dbengine,host,database,username,password,dbindex):
+            self.database_id = database_id
+            self.dbengine = dbengine
+            self.host = host
+            self.database = database
+            self.username = username
+            self.password = password
+            self.dbindex = dbindex
