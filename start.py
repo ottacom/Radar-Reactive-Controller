@@ -13,6 +13,7 @@ import logging
 from or_class import *
 import MySQLdb
 
+
 #Global definitions
 global configfile #path of configfile
 global databasefile
@@ -22,11 +23,14 @@ global probe_obj
 global database_obj
 global startuplist
 global msg
-
+global controllercounter
+global probecounter
+global dbcounter
 
 #Configfile
 configfile="controller.json"
 databasefile="database.json"
+
 #controller
 ctrl_obj = []
 probe_obj = []
@@ -35,14 +39,6 @@ startuplist = {}
 
 
 
-def t_controllercounter(val):
-    global controllercounter
-    controllercounter=val
-
-
-def t_probecounter(val):
-    global probecounter
-    probecounter=val
 
 
 
@@ -161,6 +157,8 @@ def objectbuilder():
     global probecounter
     controllercounter = 0
     probecounter = 0
+    abs_probeindex=0
+    lastresult=""
     try:
 
         #check for controller
@@ -180,13 +178,13 @@ def objectbuilder():
             row_ctrl['expected_value'],
             row_ctrl['action_true'],
             row_ctrl['action_false'],
-            row_ctrl['rollback_after'],
-            row_ctrl['rollback_action'],
-            totalprobes,controllercounter))
+            row_ctrl['rearm_after'],
+            row_ctrl['rearm_action'],
+            totalprobes,controllercounter,lastresult))
 
             controllercounter +=1
             pbindex=0
-
+            lastresult=""
             for pbindex in range(0,totalprobes):
 
                 probe_obj.append(Probe(
@@ -194,17 +192,14 @@ def objectbuilder():
                 row_ctrl['probeset'][pbindex]['sql'],
                 row_ctrl['probeset'][pbindex]['sqlengine'],
                 row_ctrl['probeset'][pbindex]['probefile'],
-                controllercounter-1,pbindex))
-
+                controllercounter-1,pbindex,abs_probeindex,lastresult))
                 pbindex +=1
                 probecounter +=1
-
+                abs_probeindex +=1
                 #Go to the next probe
 
         #Public value
 
-        t_controllercounter(controllercounter)
-        t_probecounter(probecounter)
 
         return True
     except KeyError:
@@ -281,6 +276,8 @@ def chkoptions(c,val,options,attribute):
 
 
 def chkfile(filename,section):
+    #ignoring paramenters
+    filename =filename.split(' ',1)[0]
 
 
 
@@ -329,10 +326,10 @@ def checklogiccontroller(c):
                             if chkfile(ctrl_obj[c].action_false,ctrl_obj[c].controllername_id) == False:
                                 return False
                             else:
-                                if chkrange(c,ctrl_obj[c].rollback_after,1,31536000) == False:
+                                if chkrange(c,ctrl_obj[c].rearm_after,1,31536000) == False:
                                     return False
                                 else:
-                                    if chkfile(ctrl_obj[c].rollback_action,ctrl_obj[c].controllername_id) == False:
+                                    if chkfile(ctrl_obj[c].rearm_action,ctrl_obj[c].controllername_id) == False:
                                         return False
                                     else:
                                         return True
@@ -429,20 +426,25 @@ def checkdbconnection(index):
         db = MySQLdb.connect(host=database_obj[index].host,
                      user=database_obj[index].username,
                      passwd=database_obj[index].password,
-                     db=database_obj[i].database)
+                     db=database_obj[index].database)
 
 
         cursor = db.cursor()
         cursor.execute("SELECT VERSION()")
         results = cursor.fetchone()
+
         # Check if anything at all is returned
         if results:
+
             return True
         else:
+
             return False
 
     except MySQLdb.Error:
-
+        print"\n\nno go: Connection database problem "+database_obj[index].host+" plese check user password and access to the database"
+        print
+        print
         return False
 
 
@@ -461,6 +463,111 @@ def checkzombie(name,max_process):
     else:
 
         return False
+
+
+def jobsimulation(job):
+
+    try:
+        print "--->Starting Radar Controller simulation for:"+ctrl_obj[job].controllername_id
+        i=0
+        i=probe_obj[i].abs_probeindex
+
+        if job == 0:
+            startprobe=0
+        else:
+            startprobe=ctrl_obj[job-1].totalprobes
+
+
+        for i in range(startprobe, ctrl_obj[job].totalprobes+startprobe):
+
+
+            print "------>Starting probe "+probe_obj[i].probename_id
+
+            if (probe_obj[i].sql) :
+                print "--------->Executing SQL "+probe_obj[i].sql
+                dbindex=0
+                while (probe_obj[i].sqlengine == database_obj[dbindex].dbengine):
+
+                    dbindex+=1
+                probe_obj[i].lastresult=executesql(probe_obj[i].sql,dbindex)
+                print "--------->Sql on "+probe_obj[i].probename_id+" has returns "+str(probe_obj[i].lastresult)
+                #Condition valorizing
+                ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
+
+            else:
+
+
+                print "-------->Executing Command "+probe_obj[i].probefile
+                #split parameters
+                executefile=probe_obj[i].probefile.split(' ',1)[0]
+                par=probe_obj[i].probefile.split(' ',1)[1]
+                probe_obj[i].lastresult=subprocess.call([executefile,par],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                print "-------->Command on "+probe_obj[i].probename_id+" has returns "+str(probe_obj[i].lastresult)
+                #Condition valorizing
+                ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
+
+        i =+1
+
+        print "--->Verifing conditions "+ctrl_obj[job].condition
+        ctrl_obj[job].lastresult=executesql("Select "+ctrl_obj[job].condition,dbindex)
+
+        if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
+
+            print "--->Condition is satisfied we got "+str(ctrl_obj[job].lastresult)+" and we expected "+str(ctrl_obj[job].expected_value)
+            if (ctrl_obj[job].action_true):
+                print "--->This is a simulation and I don't start "+str(ctrl_obj[job].action_true)+",I will do that outside the simulation"
+        else :
+            print "--->Condition is not satisfied we got "+str(ctrl_obj[job].lastresult)+" but we expected "+str(ctrl_obj[job].expected_value)
+            if (ctrl_obj[job].action_false):
+                print "--->This is a simulation and I don't start "+ctrl_obj[job].action_false+",I will do that outside the simulation"
+                #open('/tmp', ctrl_obj[job].controllername_id.false).close()
+
+        if (ctrl_obj[job].rearm_after):
+            print "--->Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied"
+
+        if (ctrl_obj[job].rearm_action):
+            print "--->The rearm is set but this is a simulation and I don't start "+ctrl_obj[job].rearm_action+",I will do that outside the simulation"
+        print
+        print
+
+
+    except:
+
+        print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
+        print
+        print
+
+
+
+def executesql (sql,dbindex):
+
+
+        try:
+            db = MySQLdb.connect(host=database_obj[dbindex].host,
+                         user=database_obj[dbindex].username,
+                         passwd=database_obj[dbindex].password,
+                         db=database_obj[dbindex].database)
+
+
+            cursor = db.cursor()
+            cursor.execute(sql)
+            results = cursor.fetchone()[0]
+
+            # Check if anything at all is returned
+            if results:
+
+                return results
+
+            else:
+
+                return False
+
+        except MySQLdb.Error:
+            print"Ouch.. We have a database problem on "+database_obj[index].host+" plese check user password and access to the database"
+            print
+            print
+            return False
+
 
 
 
@@ -541,23 +648,34 @@ def main():
 
     i=0
 
-
+    progressbar(lastbar+(20/dbcounter)*i,100,'Check database connectivities.......          ')
     for i in range(0,dbcounter):
 
         if checkdbconnection(i) == True:
 
-            lastbar=lastbar+5/dbcounter;
+            lastbar=lastbar+25/dbcounter;
             progressbar(lastbar+(20/dbcounter)*i,100,'Check database connectivities.......          ')
 
         else:
             quit()
     i +=1
 
+
+
+
+    progressbar(100,100,'Check complete!!!!                                  ')
     print
     print
-    print
-    print "Radar Reactive Controller syntax is OK and ready to go"
+    print "Radar Reactive Controller syntax is OK , we are ready to simulating the Radar"
     print "\n\n"
+
+    i=0
+#global controllercounter
+#global probecounter
+#global dbcounter
+    for i in range(0,controllercounter):
+        jobsimulation(i)
+    i +=1
 
 
 ##############################################################

@@ -8,12 +8,12 @@ class Controller(object):
     expected_value = ""
     action_true = "nop"
     action_false = "nop"
-    rollback_after = 1
-    rollback_action = "nop"
+    rearm_after = 0
+    rearm_action = "nop"
 
 
 
-    def __init__(self,controllername_id,logging, condition, expected_value,action_true,action_false,rollback_after,rollback_action,totalprobes,index):
+    def __init__(self,controllername_id,logging, condition, expected_value,action_true,action_false,rearm_after,rearm_action,totalprobes,index,lastresult):
 
 
         self.controllername_id = controllername_id
@@ -22,11 +22,11 @@ class Controller(object):
         self.expected_value = expected_value
         self.action_true = action_true
         self.action_false = action_false
-        self.rollback_after = rollback_after
-        self.rollback_action = rollback_action
+        self.rearm_after = rearm_after
+        self.rearm_action = rearm_action
         self.totalprobes = totalprobes
         self.index = index
-
+        self.lastresult = lastresult
 
 
 
@@ -37,13 +37,16 @@ class Probe(object):
 
 
 
-        def __init__(self,probename_id,sql,sqlengine,probefile,controllerindex,probeindex):
+        def __init__(self,probename_id,sql,sqlengine,probefile,controllerindex,probeindex,abs_probeindex,lastresult):
             self.probename_id = probename_id
             self.sql = sql
             self.sqlengine = sqlengine
             self.probefile = probefile
             self.controllerindex = controllerindex
             self.probeindex = probeindex
+            self.abs_probeindex = abs_probeindex
+            self.lastresult = lastresult
+
 
 
 
