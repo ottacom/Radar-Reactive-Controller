@@ -15,8 +15,8 @@
                                   "probefile": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com"
                                   }],
                           "logging":"yes",
-                          "condition":"(coltin > 18) and (coltout < 18)",
-                          "expected_value":"0",
+                          "condition":"(coltin < 18) and (coltout < 18)",
+                          "expected_value":"1",
                           "action_true": "",
                           "action_false": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
                           "rearm_after": 1,
