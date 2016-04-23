@@ -35,7 +35,7 @@ ctrl_obj = []
 probe_obj = []
 database_obj = []
 startuplist = {}
-
+dirtmp="/tmp/"
 
 
 
@@ -255,11 +255,11 @@ def dbobjectbuilder():
 
 
 
-def chkrange(c,val,min,max):
+def chkrange(c,val,min,max,attribute):
     if (val >= min) and (val <= max) :
         return True
     else:
-        print "\n\nnogo: The "+val+" of  "+ctrl_obj[c].controllername_id+" must be => "+min+" and <= "+max+" secons\n"
+        print "\n\nnogo: The "+attribute+"is set to "+str(val)+" on "+ctrl_obj[c].controllername_id+" but must be => "+str(min)+" and <= "+str(max)+" secons\n"
 
         return False
 
@@ -325,7 +325,7 @@ def checklogiccontroller(c):
                             if chkfile(ctrl_obj[c].action_false,ctrl_obj[c].controllername_id) == False:
                                 return False
                             else:
-                                if chkrange(c,ctrl_obj[c].rearm_after,1,31536000) == False:
+                                if chkrange(c,ctrl_obj[c].rearm_after,0,31536000,'Rearm') == False:
                                     return False
                                 else:
                                     if chkfile(ctrl_obj[c].rearm_action,ctrl_obj[c].controllername_id) == False:
@@ -501,7 +501,7 @@ def jobsimulation(job):
                 #split parameters
 
 
-                probe_obj[i].lastresult=subprocess.call([splitcommparameter(probe_obj[i].probefile)],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                probe_obj[i].lastresult=subprocess.call([(probe_obj[i].probefile).split(' ',1)[0],(probe_obj[i].probefile).split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 print "-------->Command on "+probe_obj[i].probename_id+" has returns "+str(probe_obj[i].lastresult)
                 #Condition valorizing
                 ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
@@ -520,7 +520,7 @@ def jobsimulation(job):
             print "--->Condition is not satisfied we got "+str(ctrl_obj[job].lastresult)+" but we expected "+str(ctrl_obj[job].expected_value)
             if (ctrl_obj[job].action_false):
                 print "--->This is a simulation and I don't start "+ctrl_obj[job].action_false+",I will do that outside the simulation"
-                #open('/tmp', ctrl_obj[job].controllername_id.false).close()
+                #open(dirtmp+, ctrl_obj[job].controllername_id.false).close()
 
         if (ctrl_obj[job].rearm_after):
             print "--->Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied"
@@ -726,7 +726,7 @@ def jobexecute(job):
         executefile =""
         par=""
 
-
+        tmpfile=ctrl_obj[job].controllername_id.replace(" ", "_")
 
         i=0
         i=probe_obj[i].abs_probeindex
@@ -764,39 +764,71 @@ def jobexecute(job):
         i =+1
 
 
-        ctrl_obj[job].lastresult=executesql("Select "+ctrl_obj[job].condition,dbindex)
+        ctrl_obj[job].lastresult=executesql("Select "+ctrl_obj[job].condition,1)
 
+        #Condition True
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
-            print "Controller "+ctrl_obj[job].controllername_id+" has return True"
+            print "Controller "+ctrl_obj[job].controllername_id+" is True"
             if (ctrl_obj[job].action_true):
                 print "Controller "+ctrl_obj[job].controllername_id+" has started the"+ctrl_obj[job].action_true
-                ctrl_obj[job].lastresult=subprocess.call([ctrl_obj[job].action_true.split(' ',1)[0],ctrl_obj[job].action_true.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                subprocess.call([ctrl_obj[job].action_true.split(' ',1)[0],ctrl_obj[job].action_true.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        else :
+        else:
             print "Controller "+ctrl_obj[job].controllername_id+" has return False"
+
+        #Condition True back from fasle
+        if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value) and ctrl_obj[job].rearm_after == 0 and (os.path.exists(dirtmp+'KO_'+tmpfile)):
+            print "Controller "+ctrl_obj[job].controllername_id+" is back from False now is True!"
+
+            if (ctrl_obj[job].action_true):
+                print "Controller "+ctrl_obj[job].controllername_id+" has started the"+ctrl_obj[job].action_true
+                subprocess.call([ctrl_obj[job].action_true.split(' ',1)[0],ctrl_obj[job].action_true.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+        #Condition False for the first time
+        if str(ctrl_obj[job].lastresult) != str(ctrl_obj[job].expected_value) and not(os.path.exists(dirtmp+'KO_'+tmpfile)):
 
             if (ctrl_obj[job].action_false):
                 print "Controller "+ctrl_obj[job].controllername_id+" has started the"+ctrl_obj[job].action_false
-                ctrl_obj[job].lastresult=subprocess.call([ctrl_obj[job].action_false.split(' ',1)[0],ctrl_obj[job].action_false.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                #open('/tmp', ctrl_obj[job].controllername_id.false).close()
+                subprocess.call([ctrl_obj[job].action_false.split(' ',1)[0],ctrl_obj[job].action_false.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                touch(dirtmp+'KO_'+tmpfile)
 
-        if (ctrl_obj[job].rearm_after) > 0:
-            print "Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied"
-            totalfile=len(fnmatch.filter(os.listdir('/tmp'), '*.'+ctrl_obj[job].controllername_id))
-            tfile=int(totalfile)+1
-            touch('/tmp/'+str(tfile)+'.'+ctrl_obj[job].controllername_id)
+        #Condition true after Rearm level reached
+        if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value) and ctrl_obj[job].rearm_after > 0 and os.path.exists(dirtmp+'KO_'+tmpfile):
+                totalfile=""
+                print "Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied"
+                totalfile=len(fnmatch.filter(os.listdir(dirtmp), '*.'+tmpfile))
+                tfile=int(totalfile)+1
 
-        if (ctrl_obj[job].rearm_action) and (totalfile >=ctrl_obj[job].rearm_after):
+                touch(dirtmp+str(tfile)+'.'+tmpfile)
 
-                print "Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" time"
-                ctrl_obj[job].lastresult=subprocess.call([ctrl_obj[job].rearm_action.split(' ',1)[0],ctrl_obj[job].rearm_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                filelist = [ f for f in os.listdir("/tmp") if f.endswith("*."+ctrl_obj[job].controllername_id) ]
-                for f in filelist:
-                    os.remove(f)
+                if (tfile >=ctrl_obj[job].rearm_after):
+
+                        print "Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" time"
+                        subprocess.call([ctrl_obj[job].rearm_action.split(' ',1)[0],ctrl_obj[job].rearm_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        #Clear all tmpfile
+                        files = os.listdir(dirtmp)
+                        for f in files:
+
+                          if not os.path.isdir(f) and tmpfile in f:
+
+                            os.remove(dirtmp+f)
+
+
+
+                print "Controller "+ctrl_obj[job].controllername_id+" has been rearmed after "+str(ctrl_obj[job].rearm_after)+" times True"
+
+                if (ctrl_obj[job].action_true):
+                    print "Controller "+ctrl_obj[job].controllername_id+" has started the"+ctrl_obj[job].action_true
+                    ctrl_obj[job].lastresult=subprocess.call([ctrl_obj[job].action_true.split(' ',1)[0],ctrl_obj[job].action_true.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+
+
 
     except:
 
-        print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
+        #print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
         print
 

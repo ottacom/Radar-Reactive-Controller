@@ -15,11 +15,11 @@
                                   "probefile": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com"
                                   }],
                           "logging":"yes",
-                          "condition":"(coltin < 18) and (coltout < 18)",
-                          "expected_value":"1",
+                          "condition":"(coltin*2 > 18)",
+                          "expected_value":"False",
                           "action_true": "",
                           "action_false": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
-                          "rearm_after": 1,
+                          "rearm_after": 3,
                           "rearm_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com"
                         },{
                         "controllername_id":"Saturation Colt2",
@@ -39,7 +39,7 @@
                           "expected_value":"False",
                           "action_true": "",
                           "action_false": "",
-                          "rearm_after": 1,
+                          "rearm_after": 0,
                           "rearm_action": ""
                         }]
 

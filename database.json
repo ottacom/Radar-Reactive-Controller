@@ -1,6 +1,13 @@
 {
       "databases":
                         [{
+                          "database_id":"conditiondb",
+                          "dbengine":"mysql",
+                          "host":"192.168.122.144",
+                          "database": "observium",
+                          "username":"root",
+                          "password":"password"
+                        },{
                           "database_id":"mysql1",
                           "dbengine":"mysql",
                           "host":"192.168.122.144",
