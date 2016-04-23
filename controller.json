@@ -2,45 +2,66 @@
         "controllerset":
 
                         [{
-                        "controllername_id":"Saturation Colt",
+                        "controllername_id":"Saturation MPLS Malta",
                         "probeset":[{
-                                  "probename_id":"coltin",
-                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
+                                  "probename_id":"mplsin",
+                                  "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='46220';",
                                   "sqlengine" : "mysql1",
                                   "probefile": ""
                                   },{
-                                  "probename_id":"coltout",
-                                  "sql": "",
-                                  "sqlengine" : "",
-                                  "probefile": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com"
-                                  }],
-                          "logging":"yes",
-                          "condition":"(coltin*2 > 18)",
-                          "expected_value":"False",
-                          "action_true": "",
-                          "action_false": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
-                          "rearm_after": 3,
-                          "rearm_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com"
-                        },{
-                        "controllername_id":"Saturation Colt2",
-                        "probeset":[{
-                                  "probename_id":"coltin2",
-                                  "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
-                                  "sqlengine" : "mysql1",
-                                  "probefile": ""
-                                  },{
-                                  "probename_id":"coltout2",
-                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
+                                  "probename_id":"mplsout",
+                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='46220';",
                                   "sqlengine" : "mysql1",
                                   "probefile": ""
                                   }],
                           "logging":"yes",
-                          "condition":"(coltin2 >= 18) and (coltout2 >= 18)",
+                          "condition":"(mplsin >= 8) or (mplsout >= 8)",
                           "expected_value":"False",
                           "action_true": "",
                           "action_false": "",
                           "rearm_after": 0,
                           "rearm_action": ""
-                        }]
+                        },{
+                        "controllername_id":"Saturation Colt",
+                        "probeset":[{
+                                  "probename_id":"coltin",
+                                  "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  },{
+                                  "probename_id":"coltout",
+                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  }],
+                          "logging":"yes",
+                          "condition":"(coltin >= 18) or (coltout >= 18)",
+                          "expected_value":"False",
+                          "action_true": "",
+                          "action_false": "",
+                          "rearm_after": 0,
+                          "rearm_action": ""
+                        },{
+			                  "controllername_id":"Saturation Fastweb",
+                        "probeset":[{
+                                  "probename_id":"fastwebin",
+                                  "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='46212';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  },{
+                                  "probename_id":"fastwebout",
+                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='46212';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  }],
+                          "logging":"yes",
+                          "condition":"(fastwebin >= 18) or (fastwebout >= 18)",
+                          "expected_value":"False",
+                          "action_true": "",
+                          "action_false": "",
+                          "rearm_after": 0,
+                          "rearm_action": ""
+                        }
+			]
 
 }

@@ -195,6 +195,7 @@ def objectbuilder():
                 pbindex +=1
                 probecounter +=1
                 abs_probeindex +=1
+
                 #Go to the next probe
 
         #Public value
@@ -464,21 +465,17 @@ def checkzombie(name,max_process):
         return False
 
 
-def jobsimulation(job):
+def jobsimulation(job,startprobe):
+
 
     try:
 
         print "--->Starting Radar Controller simulation for:"+ctrl_obj[job].controllername_id
         i=0
-        i=probe_obj[i].abs_probeindex
-
-        if job == 0:
-            startprobe=0
-        else:
-            startprobe=ctrl_obj[job-1].totalprobes
 
 
-        for i in range(startprobe, ctrl_obj[job].totalprobes+startprobe):
+
+        for i in range(startprobe, startprobe+ctrl_obj[job].totalprobes):
 
 
             print "------>Starting probe "+probe_obj[i].probename_id
@@ -489,6 +486,7 @@ def jobsimulation(job):
                 while (probe_obj[i].sqlengine == database_obj[dbindex].dbengine):
 
                     dbindex+=1
+
                 probe_obj[i].lastresult=executesql(probe_obj[i].sql,dbindex)
                 print "--------->Sql on "+probe_obj[i].probename_id+" has returns "+str(probe_obj[i].lastresult)
                 #Condition valorizing
@@ -507,6 +505,8 @@ def jobsimulation(job):
                 ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
 
         i =+1
+
+
 
         print "--->Verifing conditions "+ctrl_obj[job].condition
         ctrl_obj[job].lastresult=executesql("Select "+ctrl_obj[job].condition,dbindex)
@@ -533,7 +533,7 @@ def jobsimulation(job):
 
     except:
 
-        print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
+    #    print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
         print
 
@@ -543,6 +543,7 @@ def executesql (sql,dbindex):
 
 
         try:
+
             db = MySQLdb.connect(host=database_obj[dbindex].host,
                          user=database_obj[dbindex].username,
                          passwd=database_obj[dbindex].password,
@@ -563,10 +564,13 @@ def executesql (sql,dbindex):
                 return False
 
         except MySQLdb.Error:
-            print"Ouch.. We have a database problem on "+database_obj[index].host+" plese check user password and access to the database"
+            print
+            print
+            print"!!!!!!!!!!!!!Ouch.. We have a database problem on "+database_obj[dbindex].host+" plese check user password and access to the database"
             print
             print
             return False
+
 
 
 
@@ -672,8 +676,15 @@ def simulation():
 
     i=0
 
+    startprobe=0
     for i in range(0,controllercounter):
-        jobsimulation(i)
+        p=0
+        while (probe_obj[p].controllerindex != i):
+            p +=1
+        startprobe=probe_obj[p].abs_probeindex
+
+
+        jobsimulation(i,startprobe)
     i +=1
 
 
@@ -710,18 +721,22 @@ def production(silent):
 
 
     print "RRC has started"
+    startprobe=0
     for i in range(0,controllercounter):
+        p=0
+        while (probe_obj[p].controllerindex != i):
+            p +=1
+        startprobe=probe_obj[p].abs_probeindex
 
-        print "Controller "+ctrl_obj[i].controllername_id+" started"
-        jobexecute(i)
+
+        jobexecute(i,startprobe)
     i +=1
     print "RRC as terminated"
 
 
 
 
-
-def jobexecute(job):
+def jobexecute(job,startprobe):
     try:
         executefile =""
         par=""
@@ -729,12 +744,6 @@ def jobexecute(job):
         tmpfile=ctrl_obj[job].controllername_id.replace(" ", "_")
 
         i=0
-        i=probe_obj[i].abs_probeindex
-
-        if job == 0:
-            startprobe=0
-        else:
-            startprobe=ctrl_obj[job-1].totalprobes
 
 
         for i in range(startprobe, ctrl_obj[job].totalprobes+startprobe):
