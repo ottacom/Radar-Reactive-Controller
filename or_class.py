@@ -6,22 +6,24 @@ class Controller(object):
     logging = ""
     condition= ""
     expected_value = ""
-    action_true = "nop"
-    action_false = "nop"
+    ifsatisfied_action_action = "nop"
+    on_ifnotsatisfied_action_action = "nop"
     rearm_after = 0
     rearm_action = "nop"
 
 
 
-    def __init__(self,controllername_id,logging, condition, expected_value,action_true,action_false,rearm_after,rearm_action,totalprobes,index,lastresult):
+    def __init__(self,controllername_id,logging, condition, expected_value,ifsatisfied_action,ifnotsatisfied_action,repeat_ifsatisfied_action,repeat_ifnotsatisfied_action,rearm_after,rearm_action,totalprobes,index,lastresult):
 
 
         self.controllername_id = controllername_id
         self.logging = logging
         self.condition = condition
         self.expected_value = expected_value
-        self.action_true = action_true
-        self.action_false = action_false
+        self.ifsatisfied_action = ifsatisfied_action
+        self.ifnotsatisfied_action = ifnotsatisfied_action
+        self.repeat_ifsatisfied_action = repeat_ifsatisfied_action
+        self.repeat_ifnotsatisfied_action = repeat_ifnotsatisfied_action
         self.rearm_after = rearm_after
         self.rearm_action = rearm_action
         self.totalprobes = totalprobes

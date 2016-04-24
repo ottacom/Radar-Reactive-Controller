@@ -2,7 +2,7 @@
         "controllerset":
 
                         [{
-                        "controllername_id":"Saturation MPLS Malta",
+                        "controllername_id":"Saturation MPLS Roma-Malta",
                         "probeset":[{
                                   "probename_id":"mplsin",
                                   "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='46220';",
@@ -15,14 +15,16 @@
                                   "probefile": ""
                                   }],
                           "logging":"yes",
-                          "condition":"(mplsin >= 8) or (mplsout >= 8)",
+                          "condition":"select (mplsin >= 8) or (mplsout >= 8)",
                           "expected_value":"False",
-                          "action_true": "",
-                          "action_false": "",
-                          "rearm_after": 0,
-                          "rearm_action": ""
+                          "ifsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
+                          "ifnotsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
+                          "repeat_ifsatisfied_action":"once",
+                          "repeat_ifnotsatisfied_action":"ever",
+                          "rearm_after": 2,
+                          "rearm_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com"
                         },{
-                        "controllername_id":"Saturation Colt",
+                        "controllername_id":"Saturation Colt-Roma",
                         "probeset":[{
                                   "probename_id":"coltin",
                                   "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='46235';",
@@ -35,14 +37,16 @@
                                   "probefile": ""
                                   }],
                           "logging":"yes",
-                          "condition":"(coltin >= 18) or (coltout >= 18)",
+                          "condition":"select (coltin >= 18) or (coltout >= 18)",
                           "expected_value":"False",
-                          "action_true": "",
-                          "action_false": "",
+                          "ifsatisfied_action": "",
+                          "ifnotsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
+                          "repeat_ifsatisfied_action":"",
+                          "repeat_ifnotsatisfied_action":"once",
                           "rearm_after": 0,
                           "rearm_action": ""
                         },{
-			                  "controllername_id":"Saturation Fastweb",
+			                  "controllername_id":"Saturation Fastweb-Roma",
                         "probeset":[{
                                   "probename_id":"fastwebin",
                                   "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='46212';",
@@ -55,13 +59,37 @@
                                   "probefile": ""
                                   }],
                           "logging":"yes",
-                          "condition":"(fastwebin >= 18) or (fastwebout >= 18)",
+                          "condition":"select (fastwebin >= 18) or (fastwebout >= 18)",
                           "expected_value":"False",
-                          "action_true": "",
-                          "action_false": "",
+                          "ifsatisfied_action": "",
+                          "ifnotsatisfied_action": "",
+                          "repeat_ifsatisfied_action":"",
+                          "repeat_ifnotsatisfied_action":"",
                           "rearm_after": 0,
                           "rearm_action": ""
-                        }
+                          },{
+			                  "controllername_id":"Saturation GO-Malta",
+                        "probeset":[{
+                                  "probename_id":"GOin",
+                                  "sql": "select ((ifInOctets_rate * 8)/1000000) from `ports-state` where port_id='2141';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  },{
+                                  "probename_id":"Goout",
+                                  "sql": "select ((ifOutOctets_rate * 8)/1000000) from `ports-state` where port_id='2141';",
+                                  "sqlengine" : "mysql1",
+                                  "probefile": ""
+                                  }],
+                          "logging":"yes",
+                          "condition":"select (GOin >= 12) or (Goout >= 12)",
+                          "expected_value":"False",
+                          "ifsatisfied_action": "",
+                          "ifnotsatisfied_action": "",
+                          "repeat_ifsatisfied_action":"",
+                          "repeat_ifnotsatisfied_action":"",
+                          "rearm_after": 0,
+                          "rearm_action": ""
+                          }
 			]
 
 }

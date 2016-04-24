@@ -175,8 +175,10 @@ def objectbuilder():
             row_ctrl['logging'],
             row_ctrl['condition'],
             row_ctrl['expected_value'],
-            row_ctrl['action_true'],
-            row_ctrl['action_false'],
+            row_ctrl['ifsatisfied_action'],
+            row_ctrl['ifnotsatisfied_action'],
+            row_ctrl['repeat_ifsatisfied_action'],
+            row_ctrl['repeat_ifnotsatisfied_action'],
             row_ctrl['rearm_after'],
             row_ctrl['rearm_action'],
             totalprobes,controllercounter,lastresult))
@@ -320,10 +322,10 @@ def checklogiccontroller(c):
                         print "\nno go: All expected_value must be set"
                         return False
                     else:
-                        if chkfile(ctrl_obj[c].action_true,ctrl_obj[c].controllername_id) == False:
+                        if chkfile(ctrl_obj[c].ifsatisfied_action,ctrl_obj[c].controllername_id) == False:
                             return False
                         else:
-                            if chkfile(ctrl_obj[c].action_false,ctrl_obj[c].controllername_id) == False:
+                            if chkfile(ctrl_obj[c].ifnotsatisfied_action,ctrl_obj[c].controllername_id) == False:
                                 return False
                             else:
                                 if chkrange(c,ctrl_obj[c].rearm_after,0,31536000,'Rearm') == False:
@@ -332,7 +334,17 @@ def checklogiccontroller(c):
                                     if chkfile(ctrl_obj[c].rearm_action,ctrl_obj[c].controllername_id) == False:
                                         return False
                                     else:
-                                        return True
+                                        if chkfile(ctrl_obj[c].rearm_action,ctrl_obj[c].controllername_id) == False:
+                                            return False
+                                        else:
+                                            options="once,ever"
+                                            if ctrl_obj[c].ifsatisfied_action and chkoptions(c,ctrl_obj[c].repeat_ifsatisfied_action,options,'repeat_ifsatisfied_action') == False:
+                                                return False
+                                            else:
+                                                if ctrl_obj[c].ifnotsatisfied_action and chkoptions(c,ctrl_obj[c].repeat_ifnotsatisfied_action,options,'repeat_ifnotsatisfied_action') == False:
+                                                    return False
+                                                else:
+                                                        return True
 
 
 def checklogicprobe(i):
@@ -509,21 +521,21 @@ def jobsimulation(job,startprobe):
 
 
         print "--->Verifing conditions "+ctrl_obj[job].condition
-        ctrl_obj[job].lastresult=executesql("Select "+ctrl_obj[job].condition,dbindex)
+        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,dbindex)
 
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
 
-            print "--->Condition is satisfied we got "+str(ctrl_obj[job].lastresult)+" and we expected "+str(ctrl_obj[job].expected_value)
-            if (ctrl_obj[job].action_true):
-                print "--->This is a simulation and I don't start "+str(ctrl_obj[job].action_true)+",I will do that outside the simulation"
+            print "--->Condition is satisfied_action we got "+str(ctrl_obj[job].lastresult)+" and we expected "+str(ctrl_obj[job].expected_value)
+            if (ctrl_obj[job].ifsatisfied_action):
+                print "--->This is a simulation and I don't start "+str(ctrl_obj[job].ifsatisfied_action)+",I will do that outside the simulation"
         else :
-            print "--->Condition is not satisfied we got "+str(ctrl_obj[job].lastresult)+" but we expected "+str(ctrl_obj[job].expected_value)
-            if (ctrl_obj[job].action_false):
-                print "--->This is a simulation and I don't start "+ctrl_obj[job].action_false+",I will do that outside the simulation"
+            print "--->Condition is not satisfied_action we got "+str(ctrl_obj[job].lastresult)+" but we expected "+str(ctrl_obj[job].expected_value)
+            if (ctrl_obj[job].ifnotsatisfied_action):
+                print "--->This is a simulation and I don't start "+ctrl_obj[job].ifnotsatisfied_action+",I will do that outside the simulation"
                 #open(dirtmp+, ctrl_obj[job].controllername_id.false).close()
 
         if (ctrl_obj[job].rearm_after):
-            print "--->Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied"
+            print "--->Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied_action"
 
         if (ctrl_obj[job].rearm_action):
             print "--->The rearm is set but this is a simulation and I don't start "+ctrl_obj[job].rearm_action+",I will do that outside the simulation"
@@ -565,9 +577,8 @@ def executesql (sql,dbindex):
 
         except MySQLdb.Error:
             print
-            print
-            print"!!!!!!!!!!!!!Ouch.. We have a database problem on "+database_obj[dbindex].host+" plese check user password and access to the database"
-            print
+            print "!!!!!!!!!!!!!"
+            print "Ouch.. We have a database problem during SQL execution on "+database_obj[dbindex].host+"\nThe sql query \""+sql+"\" has returned an unexpected Error\nplease check sql sintax user password and if you have access to the database"
             print
             return False
 
@@ -692,52 +703,212 @@ def simulation():
 
 def production(silent):
     defaultmsg="Something is going wrong.. please check you configuration using -m simulation"
-    print "Starting RRC"
+    if silent == False:
+        print "Starting RRC"
 
-    if loadconfig(configfile) == True:
+        if loadconfig(configfile) == True:
 
-        print "Inizializing...."
+            print "Inizializing...."
+        else:
+            print defaultmsg
+            quit()
+
+        if objectbuilder() == True:
+            print "Workflow created.."
+        else:
+            print defaultmsg
+            quit()
+
+        if loadconfig(databasefile) == True:
+            print "Inizializing database"
+        else:
+            print defaultmsg
+            quit()
+
+        if dbobjectbuilder() == True:
+            print "Database Connection created...."
+        else:
+            print defaultmsg
+            quit()
+
+
+        print "RRC has started"
+        startprobe=0
+        for i in range(0,controllercounter):
+            p=0
+            while (probe_obj[p].controllerindex != i):
+                p +=1
+            startprobe=probe_obj[p].abs_probeindex
+
+
+            jobexecute(i,startprobe)
+
+        i +=1
+        print"----------------------------------------------------------------------------------"
+        print "RRC as terminated"
+
     else:
-        print defaultmsg
-        quit()
 
-    if objectbuilder() == True:
-        print "Workflow created.."
-    else:
-        print defaultmsg
-        quit()
+        if loadconfig(configfile) == False:
+            print defaultmsg
+            quit()
 
-    if loadconfig(databasefile) == True:
-        print "Inizializing database"
-    else:
-        print defaultmsg
-        quit()
+        if objectbuilder() == False:
+            print defaultmsg
+            quit()
 
-    if dbobjectbuilder() == True:
-        print "Database Connection created...."
-    else:
-        print defaultmsg
-        quit()
+        if loadconfig(databasefile) == False:
+            print defaultmsg
+            quit()
 
-
-    print "RRC has started"
-    startprobe=0
-    for i in range(0,controllercounter):
-        p=0
-        while (probe_obj[p].controllerindex != i):
-            p +=1
-        startprobe=probe_obj[p].abs_probeindex
+        if dbobjectbuilder() == False:
+            print defaultmsg
+            quit()
+        startprobe=0
+        for i in range(0,controllercounter):
+            p=0
+            while (probe_obj[p].controllerindex != i):
+                p +=1
+            startprobe=probe_obj[p].abs_probeindex
 
 
-        jobexecute(i,startprobe)
-    i +=1
-    print "RRC as terminated"
+            jobexecutesilent(i,startprobe)
 
+
+        i +=1
 
 
 
 def jobexecute(job,startprobe):
-    try:
+   try:
+        executefile =""
+        par=""
+
+        tmpfile=ctrl_obj[job].controllername_id.replace(" ", "_")
+
+        i=0
+        print"----------------------------------------------------------------------------------"
+
+        for i in range(startprobe, ctrl_obj[job].totalprobes+startprobe):
+
+
+
+            if (probe_obj[i].sql) :
+
+                dbindex=0
+                while (probe_obj[i].sqlengine == database_obj[dbindex].dbengine):
+
+                    dbindex+=1
+                probe_obj[i].lastresult=executesql(probe_obj[i].sql,dbindex)
+
+                #Condition valorizing
+                ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
+
+            else:
+
+
+
+                probe_obj[i].lastresult=subprocess.call([probe_obj[i].probefile.split(' ',1)[0],probe_obj[i].probefile.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+                #Condition valorizing
+                ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
+
+        i =+1
+
+
+        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,1)
+
+        #Condition satisfied
+        if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
+
+            print "Controller "+ctrl_obj[job].controllername_id+" is satisfied"
+            if ctrl_obj[job].rearm_after == 0:
+                if (ctrl_obj[job].ifsatisfied_action) and not(os.path.exists(dirtmp+'OK_'+tmpfile)) and  (ctrl_obj[job].repeat_ifsatisfied_action=="once"):
+                        print "Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action
+                        print "Action: "+ctrl_obj[job].ifsatisfied_action
+                        subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        if (os.path.exists(dirtmp+'KO_'+tmpfile)):
+                            os.remove(dirtmp+'KO_'+tmpfile)
+                        touch(dirtmp+'OK_'+tmpfile)
+
+                if (ctrl_obj[job].ifsatisfied_action) and  (ctrl_obj[job].repeat_ifsatisfied_action=="ever"):
+                        print "Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action , in "+ctrl_obj[job].repeat_ifsatisfied_action
+                        print "Action: "+ctrl_obj[job].ifsatisfied_action
+                        subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        if (os.path.exists(dirtmp+'OK_'+tmpfile)):
+                            os.remove(dirtmp+'OK_'+tmpfile)
+                        touch(dirtmp+'KO_'+tmpfile)
+            else:
+
+
+                #REARM
+                if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value) and ctrl_obj[job].rearm_after > 0 and (os.path.exists(dirtmp+'KO_'+tmpfile)):
+                    totalfile=""
+                    print "Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied_action"
+                    totalfile=len(fnmatch.filter(os.listdir(dirtmp), '*.'+tmpfile))
+                    tfile=int(totalfile)+1
+                    touch(dirtmp+str(tfile)+'.'+tmpfile)
+                    toleft=ctrl_obj[job].rearm_after-tfile
+                    print "Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" times satisfied, "+str(toleft)+" left"
+                    if (tfile >=ctrl_obj[job].rearm_after):
+
+
+                            subprocess.call([ctrl_obj[job].rearm_action.split(' ',1)[0],ctrl_obj[job].rearm_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            print "Controller "+ctrl_obj[job].controllername_id+" has been rearmed!"
+                            print "Controller "+ctrl_obj[job].controllername_id+" has started the rearm action "
+                            print "Action:"+ctrl_obj[job].rearm_action
+                            print "Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action
+                            print "Action: "+ctrl_obj[job].ifsatisfied_action
+                            files = os.listdir(dirtmp)
+                            for f in files:
+
+                              if not os.path.isdir(f) and tmpfile in f:
+
+                                os.remove(dirtmp+f)
+
+
+
+
+                    touch(dirtmp+'OK_'+tmpfile)
+
+
+        #Condition Unsatisfied
+        if str(ctrl_obj[job].lastresult) != str(ctrl_obj[job].expected_value):
+
+            print "Controller "+ctrl_obj[job].controllername_id+" is not satisfied"
+
+            if (ctrl_obj[job].ifnotsatisfied_action) and not(os.path.exists(dirtmp+'KO_'+tmpfile)) and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="once"):
+                    print "Controller "+ctrl_obj[job].controllername_id+" has started the ifnotsatisfied_action , in "+ctrl_obj[job].repeat_ifnotsatisfied_action
+                    print "Action: "+ctrl_obj[job].ifnotsatisfied_action
+                    subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    if (os.path.exists(dirtmp+'OK_'+tmpfile)):
+                        os.remove(dirtmp+'OK_'+tmpfile)
+                    touch(dirtmp+'KO_'+tmpfile)
+
+            if (ctrl_obj[job].ifnotsatisfied_action)  and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="ever"):
+                    print "Controller "+ctrl_obj[job].controllername_id+" has started has started the ifnotsatisfied_action, in "+ctrl_obj[job].repeat_ifnotsatisfied_action
+                    print "Action: "+ctrl_obj[job].ifnotsatisfied_action
+                    subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    if (os.path.exists(dirtmp+'OK_'+tmpfile)):
+                        os.remove(dirtmp+'OK_'+tmpfile)
+                    touch(dirtmp+'KO_'+tmpfile)
+
+
+
+
+
+
+
+   except:
+
+        print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
+        print
+        print
+
+
+
+def jobexecutesilent(job,startprobe):
+   try:
         executefile =""
         par=""
 
@@ -773,74 +944,78 @@ def jobexecute(job,startprobe):
         i =+1
 
 
-        ctrl_obj[job].lastresult=executesql("Select "+ctrl_obj[job].condition,1)
+        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,1)
 
-        #Condition True
+        #Condition satisfied
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
-            print "Controller "+ctrl_obj[job].controllername_id+" is True"
-            if (ctrl_obj[job].action_true):
-                print "Controller "+ctrl_obj[job].controllername_id+" has started the"+ctrl_obj[job].action_true
-                subprocess.call([ctrl_obj[job].action_true.split(' ',1)[0],ctrl_obj[job].action_true.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        else:
-            print "Controller "+ctrl_obj[job].controllername_id+" has return False"
-
-        #Condition True back from fasle
-        if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value) and ctrl_obj[job].rearm_after == 0 and (os.path.exists(dirtmp+'KO_'+tmpfile)):
-            print "Controller "+ctrl_obj[job].controllername_id+" is back from False now is True!"
-
-            if (ctrl_obj[job].action_true):
-                print "Controller "+ctrl_obj[job].controllername_id+" has started the"+ctrl_obj[job].action_true
-                subprocess.call([ctrl_obj[job].action_true.split(' ',1)[0],ctrl_obj[job].action_true.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
-        #Condition False for the first time
-        if str(ctrl_obj[job].lastresult) != str(ctrl_obj[job].expected_value) and not(os.path.exists(dirtmp+'KO_'+tmpfile)):
+            if ctrl_obj[job].rearm_after == 0:
+                if (ctrl_obj[job].ifsatisfied_action) and not(os.path.exists(dirtmp+'OK_'+tmpfile)) and  (ctrl_obj[job].repeat_ifsatisfied_action=="once"):
+                        subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        if (os.path.exists(dirtmp+'KO_'+tmpfile)):
+                            os.remove(dirtmp+'KO_'+tmpfile)
+                        touch(dirtmp+'OK_'+tmpfile)
 
-            if (ctrl_obj[job].action_false):
-                print "Controller "+ctrl_obj[job].controllername_id+" has started the"+ctrl_obj[job].action_false
-                subprocess.call([ctrl_obj[job].action_false.split(' ',1)[0],ctrl_obj[job].action_false.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                touch(dirtmp+'KO_'+tmpfile)
-
-        #Condition true after Rearm level reached
-        if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value) and ctrl_obj[job].rearm_after > 0 and os.path.exists(dirtmp+'KO_'+tmpfile):
-                totalfile=""
-                print "Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied"
-                totalfile=len(fnmatch.filter(os.listdir(dirtmp), '*.'+tmpfile))
-                tfile=int(totalfile)+1
-
-                touch(dirtmp+str(tfile)+'.'+tmpfile)
-
-                if (tfile >=ctrl_obj[job].rearm_after):
-
-                        print "Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" time"
-                        subprocess.call([ctrl_obj[job].rearm_action.split(' ',1)[0],ctrl_obj[job].rearm_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        #Clear all tmpfile
-                        files = os.listdir(dirtmp)
-                        for f in files:
-
-                          if not os.path.isdir(f) and tmpfile in f:
-
-                            os.remove(dirtmp+f)
+                if (ctrl_obj[job].ifsatisfied_action) and  (ctrl_obj[job].repeat_ifsatisfied_action=="ever"):
+                        subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        if (os.path.exists(dirtmp+'OK_'+tmpfile)):
+                            os.remove(dirtmp+'OK_'+tmpfile)
+                        touch(dirtmp+'KO_'+tmpfile)
+            else:
 
 
+                #REARM
+                if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value) and ctrl_obj[job].rearm_after > 0 and (os.path.exists(dirtmp+'KO_'+tmpfile)):
+                    totalfile=""
 
-                print "Controller "+ctrl_obj[job].controllername_id+" has been rearmed after "+str(ctrl_obj[job].rearm_after)+" times True"
+                    totalfile=len(fnmatch.filter(os.listdir(dirtmp), '*.'+tmpfile))
+                    tfile=int(totalfile)+1
+                    touch(dirtmp+str(tfile)+'.'+tmpfile)
+                    toleft=ctrl_obj[job].rearm_after-tfile
 
-                if (ctrl_obj[job].action_true):
-                    print "Controller "+ctrl_obj[job].controllername_id+" has started the"+ctrl_obj[job].action_true
-                    ctrl_obj[job].lastresult=subprocess.call([ctrl_obj[job].action_true.split(' ',1)[0],ctrl_obj[job].action_true.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    if (tfile >=ctrl_obj[job].rearm_after):
+
+
+                            subprocess.call([ctrl_obj[job].rearm_action.split(' ',1)[0],ctrl_obj[job].rearm_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            files = os.listdir(dirtmp)
+                            for f in files:
+
+                              if not os.path.isdir(f) and tmpfile in f:
+
+                                os.remove(dirtmp+f)
 
 
 
 
+                    touch(dirtmp+'OK_'+tmpfile)
 
-    except:
 
-        #print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
+        #Condition Unsatisfied
+        if str(ctrl_obj[job].lastresult) != str(ctrl_obj[job].expected_value):
+
+
+
+            if (ctrl_obj[job].ifnotsatisfied_action) and not(os.path.exists(dirtmp+'KO_'+tmpfile)) and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="once"):
+                    subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    if (os.path.exists(dirtmp+'OK_'+tmpfile)):
+                        os.remove(dirtmp+'OK_'+tmpfile)
+                    touch(dirtmp+'KO_'+tmpfile)
+
+            if (ctrl_obj[job].ifnotsatisfied_action)  and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="ever"):
+                    subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    if (os.path.exists(dirtmp+'OK_'+tmpfile)):
+                        os.remove(dirtmp+'OK_'+tmpfile)
+                    touch(dirtmp+'KO_'+tmpfile)
+
+
+
+
+   except:
+
+        print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
         print
-
 
 
 
@@ -886,7 +1061,7 @@ if __name__ == "__main__":
 
     if args.mode =='simulation':
         simulation()
-    if args.mode =='production':
+    if args.mode =='production' and args.silent == False:
         production(False)
-    if args.silent == True:
+    if args.mode =='production' and args.silent == True:
         production(True)
