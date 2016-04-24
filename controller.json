@@ -14,7 +14,6 @@
                                   "sqlengine" : "mysql1",
                                   "probefile": ""
                                   }],
-                          "logging":"yes",
                           "condition":"select (mplsin >= 8) or (mplsout >= 8)",
                           "expected_value":"False",
                           "ifsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
@@ -36,7 +35,6 @@
                                   "sqlengine" : "mysql1",
                                   "probefile": ""
                                   }],
-                          "logging":"yes",
                           "condition":"select (coltin >= 18) or (coltout >= 18)",
                           "expected_value":"False",
                           "ifsatisfied_action": "",
@@ -58,7 +56,6 @@
                                   "sqlengine" : "mysql1",
                                   "probefile": ""
                                   }],
-                          "logging":"yes",
                           "condition":"select (fastwebin >= 18) or (fastwebout >= 18)",
                           "expected_value":"False",
                           "ifsatisfied_action": "",
@@ -80,7 +77,6 @@
                                   "sqlengine" : "mysql1",
                                   "probefile": ""
                                   }],
-                          "logging":"yes",
                           "condition":"select (GOin >= 12) or (Goout >= 12)",
                           "expected_value":"False",
                           "ifsatisfied_action": "",

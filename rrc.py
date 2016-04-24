@@ -172,7 +172,6 @@ def objectbuilder():
 
             ctrl_obj.append(Controller(
             row_ctrl['controllername_id'],
-            row_ctrl['logging'],
             row_ctrl['condition'],
             row_ctrl['expected_value'],
             row_ctrl['ifsatisfied_action'],
@@ -309,42 +308,37 @@ def checklogiccontroller(c):
         if checkduplicatescontroller(ctrl_obj[c].controllername_id) == True:
             return False
         else:
-            options="yes,not"
-            if chkoptions(c,ctrl_obj[c].logging,options,'logging') == False:
+            if (ctrl_obj[c].condition) == False:
+                print "\nno go: All conditions mut be set"
                 return False
             else:
-
-                if (ctrl_obj[c].condition) == False:
-                    print "\nno go: All conditions mut be set"
+                if (ctrl_obj[c].expected_value) == False:
+                    print "\nno go: All expected_value must be set"
                     return False
                 else:
-                    if (ctrl_obj[c].expected_value) == False:
-                        print "\nno go: All expected_value must be set"
+                    if chkfile(ctrl_obj[c].ifsatisfied_action,ctrl_obj[c].controllername_id) == False:
                         return False
                     else:
-                        if chkfile(ctrl_obj[c].ifsatisfied_action,ctrl_obj[c].controllername_id) == False:
+                        if chkfile(ctrl_obj[c].ifnotsatisfied_action,ctrl_obj[c].controllername_id) == False:
                             return False
                         else:
-                            if chkfile(ctrl_obj[c].ifnotsatisfied_action,ctrl_obj[c].controllername_id) == False:
+                            if chkrange(c,ctrl_obj[c].rearm_after,0,31536000,'Rearm') == False:
                                 return False
                             else:
-                                if chkrange(c,ctrl_obj[c].rearm_after,0,31536000,'Rearm') == False:
+                                if chkfile(ctrl_obj[c].rearm_action,ctrl_obj[c].controllername_id) == False:
                                     return False
                                 else:
                                     if chkfile(ctrl_obj[c].rearm_action,ctrl_obj[c].controllername_id) == False:
                                         return False
                                     else:
-                                        if chkfile(ctrl_obj[c].rearm_action,ctrl_obj[c].controllername_id) == False:
+                                        options="once,ever"
+                                        if ctrl_obj[c].ifsatisfied_action and chkoptions(c,ctrl_obj[c].repeat_ifsatisfied_action,options,'repeat_ifsatisfied_action') == False:
                                             return False
                                         else:
-                                            options="once,ever"
-                                            if ctrl_obj[c].ifsatisfied_action and chkoptions(c,ctrl_obj[c].repeat_ifsatisfied_action,options,'repeat_ifsatisfied_action') == False:
+                                            if ctrl_obj[c].ifnotsatisfied_action and chkoptions(c,ctrl_obj[c].repeat_ifnotsatisfied_action,options,'repeat_ifnotsatisfied_action') == False:
                                                 return False
                                             else:
-                                                if ctrl_obj[c].ifnotsatisfied_action and chkoptions(c,ctrl_obj[c].repeat_ifnotsatisfied_action,options,'repeat_ifnotsatisfied_action') == False:
-                                                    return False
-                                                else:
-                                                        return True
+                                                    return True
 
 
 def checklogicprobe(i):
@@ -704,35 +698,35 @@ def simulation():
 def production(silent):
     defaultmsg="Something is going wrong.. please check you configuration using -m simulation"
     if silent == False:
-        print "Starting RRC"
+        logger ("Starting RRC")
 
         if loadconfig(configfile) == True:
 
-            print "Inizializing...."
+            logger ("Inizializing....")
         else:
-            print defaultmsg
+            logger (defaultmsg)
             quit()
 
         if objectbuilder() == True:
-            print "Workflow created.."
+            logger ("Workflow created..")
         else:
-            print defaultmsg
+            logger (defaultmsg)
             quit()
 
         if loadconfig(databasefile) == True:
-            print "Inizializing database"
+            logger ("Inizializing database")
         else:
-            print defaultmsg
+            logger (defaultmsg)
             quit()
 
         if dbobjectbuilder() == True:
-            print "Database Connection created...."
+            logger ("Database Connection created....")
         else:
-            print defaultmsg
+            logger (defaultmsg)
             quit()
 
 
-        print "RRC has started"
+        logger ("RRC has been started")
         startprobe=0
         for i in range(0,controllercounter):
             p=0
@@ -744,8 +738,8 @@ def production(silent):
             jobexecute(i,startprobe)
 
         i +=1
-        print"----------------------------------------------------------------------------------"
-        print "RRC as terminated"
+
+        logger ("RRC is terminated")
 
     else:
 
@@ -787,7 +781,7 @@ def jobexecute(job,startprobe):
         tmpfile=ctrl_obj[job].controllername_id.replace(" ", "_")
 
         i=0
-        print"----------------------------------------------------------------------------------"
+
 
         for i in range(startprobe, ctrl_obj[job].totalprobes+startprobe):
 
@@ -821,19 +815,19 @@ def jobexecute(job,startprobe):
         #Condition satisfied
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
 
-            print "Controller "+ctrl_obj[job].controllername_id+" is satisfied"
+            logger("Controller "+ctrl_obj[job].controllername_id+" is satisfied")
             if ctrl_obj[job].rearm_after == 0:
                 if (ctrl_obj[job].ifsatisfied_action) and not(os.path.exists(dirtmp+'OK_'+tmpfile)) and  (ctrl_obj[job].repeat_ifsatisfied_action=="once"):
-                        print "Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action
-                        print "Action: "+ctrl_obj[job].ifsatisfied_action
+                        logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action)
+                        logger ("Action: "+ctrl_obj[job].ifsatisfied_action)
                         subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         if (os.path.exists(dirtmp+'KO_'+tmpfile)):
                             os.remove(dirtmp+'KO_'+tmpfile)
                         touch(dirtmp+'OK_'+tmpfile)
 
                 if (ctrl_obj[job].ifsatisfied_action) and  (ctrl_obj[job].repeat_ifsatisfied_action=="ever"):
-                        print "Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action , in "+ctrl_obj[job].repeat_ifsatisfied_action
-                        print "Action: "+ctrl_obj[job].ifsatisfied_action
+                        logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action , in "+ctrl_obj[job].repeat_ifsatisfied_action)
+                        logger ("Action: "+ctrl_obj[job].ifsatisfied_action)
                         subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                             os.remove(dirtmp+'OK_'+tmpfile)
@@ -844,21 +838,21 @@ def jobexecute(job,startprobe):
                 #REARM
                 if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value) and ctrl_obj[job].rearm_after > 0 and (os.path.exists(dirtmp+'KO_'+tmpfile)):
                     totalfile=""
-                    print "Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied_action"
+                    logger ("Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied_action")
                     totalfile=len(fnmatch.filter(os.listdir(dirtmp), '*.'+tmpfile))
                     tfile=int(totalfile)+1
                     touch(dirtmp+str(tfile)+'.'+tmpfile)
                     toleft=ctrl_obj[job].rearm_after-tfile
-                    print "Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" times satisfied, "+str(toleft)+" left"
+                    logger ("Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" times satisfied, "+str(toleft)+" left")
                     if (tfile >=ctrl_obj[job].rearm_after):
 
 
                             subprocess.call([ctrl_obj[job].rearm_action.split(' ',1)[0],ctrl_obj[job].rearm_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                            print "Controller "+ctrl_obj[job].controllername_id+" has been rearmed!"
-                            print "Controller "+ctrl_obj[job].controllername_id+" has started the rearm action "
-                            print "Action:"+ctrl_obj[job].rearm_action
-                            print "Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action
-                            print "Action: "+ctrl_obj[job].ifsatisfied_action
+                            logger ("Controller "+ctrl_obj[job].controllername_id+" has been rearmed!")
+                            logger ("Controller "+ctrl_obj[job].controllername_id+" has started the rearm action ")
+                            logger ("Action:"+ctrl_obj[job].rearm_action)
+                            logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action)
+                            logger ("Action: "+ctrl_obj[job].ifsatisfied_action)
                             files = os.listdir(dirtmp)
                             for f in files:
 
@@ -878,16 +872,16 @@ def jobexecute(job,startprobe):
             print "Controller "+ctrl_obj[job].controllername_id+" is not satisfied"
 
             if (ctrl_obj[job].ifnotsatisfied_action) and not(os.path.exists(dirtmp+'KO_'+tmpfile)) and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="once"):
-                    print "Controller "+ctrl_obj[job].controllername_id+" has started the ifnotsatisfied_action , in "+ctrl_obj[job].repeat_ifnotsatisfied_action
-                    print "Action: "+ctrl_obj[job].ifnotsatisfied_action
+                    logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifnotsatisfied_action , in "+ctrl_obj[job].repeat_ifnotsatisfied_action)
+                    logger ("Action: "+ctrl_obj[job].ifnotsatisfied_action)
                     subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                         os.remove(dirtmp+'OK_'+tmpfile)
                     touch(dirtmp+'KO_'+tmpfile)
 
             if (ctrl_obj[job].ifnotsatisfied_action)  and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="ever"):
-                    print "Controller "+ctrl_obj[job].controllername_id+" has started has started the ifnotsatisfied_action, in "+ctrl_obj[job].repeat_ifnotsatisfied_action
-                    print "Action: "+ctrl_obj[job].ifnotsatisfied_action
+                    logger ("Controller "+ctrl_obj[job].controllername_id+" has started has started the ifnotsatisfied_action, in "+ctrl_obj[job].repeat_ifnotsatisfied_action)
+                    logger ("Action: "+ctrl_obj[job].ifnotsatisfied_action)
                     subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                         os.remove(dirtmp+'OK_'+tmpfile)
@@ -916,9 +910,7 @@ def jobexecutesilent(job,startprobe):
 
         i=0
 
-
         for i in range(startprobe, ctrl_obj[job].totalprobes+startprobe):
-
 
 
             if (probe_obj[i].sql) :
@@ -1025,6 +1017,11 @@ def touch(fname, times=None):
         os.utime(fname, times)
     finally:
         fhandle.close()
+
+def logger(message):
+        print message
+        subprocess.call(["logger",message],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 
 ##############################################################
 

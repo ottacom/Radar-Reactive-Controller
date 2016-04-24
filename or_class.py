@@ -13,11 +13,10 @@ class Controller(object):
 
 
 
-    def __init__(self,controllername_id,logging, condition, expected_value,ifsatisfied_action,ifnotsatisfied_action,repeat_ifsatisfied_action,repeat_ifnotsatisfied_action,rearm_after,rearm_action,totalprobes,index,lastresult):
+    def __init__(self,controllername_id,condition, expected_value,ifsatisfied_action,ifnotsatisfied_action,repeat_ifsatisfied_action,repeat_ifnotsatisfied_action,rearm_after,rearm_action,totalprobes,index,lastresult):
 
 
         self.controllername_id = controllername_id
-        self.logging = logging
         self.condition = condition
         self.expected_value = expected_value
         self.ifsatisfied_action = ifsatisfied_action
