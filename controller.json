@@ -14,7 +14,7 @@
                                   "sqlengine" : "mysql1",
                                   "probefile": ""
                                   }],
-                          "condition":"select (mplsin >= 8) or (mplsout >= 8)",
+                          "condition":"select (mplsin <= 8) or (mplsout >= 8)",
                           "expected_value":"False",
                           "ifsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
                           "ifnotsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",

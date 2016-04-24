@@ -505,7 +505,7 @@ def jobsimulation(job,startprobe):
                 #split parameters
 
 
-                probe_obj[i].lastresult=subprocess.call([(probe_obj[i].probefile).split(' ',1)[0],(probe_obj[i].probefile).split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                probe_obj[i].lastresult=os.system(probe_obj[i].probefile+"> /dev/null")
                 print "-------->Command on "+probe_obj[i].probename_id+" has returns "+str(probe_obj[i].lastresult)
                 #Condition valorizing
                 ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
@@ -546,7 +546,7 @@ def jobsimulation(job,startprobe):
 
 
 def executesql (sql,dbindex):
-        
+
 
         try:
 
@@ -802,7 +802,7 @@ def jobexecute(job,startprobe):
 
 
 
-                probe_obj[i].lastresult=subprocess.call([probe_obj[i].probefile.split(' ',1)[0],probe_obj[i].probefile.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                probe_obj[i].lastresult=os.system(probe_obj[i].probefile)
 
                 #Condition valorizing
                 ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
@@ -820,7 +820,7 @@ def jobexecute(job,startprobe):
                 if (ctrl_obj[job].ifsatisfied_action) and not(os.path.exists(dirtmp+'OK_'+tmpfile)) and  (ctrl_obj[job].repeat_ifsatisfied_action=="once"):
                         logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action)
                         logger ("Action: "+ctrl_obj[job].ifsatisfied_action)
-                        subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        os.system(ctrl_obj[job].ifsatisfied_action+"> /dev/null")
                         if (os.path.exists(dirtmp+'KO_'+tmpfile)):
                             os.remove(dirtmp+'KO_'+tmpfile)
                         touch(dirtmp+'OK_'+tmpfile)
@@ -828,7 +828,7 @@ def jobexecute(job,startprobe):
                 if (ctrl_obj[job].ifsatisfied_action) and  (ctrl_obj[job].repeat_ifsatisfied_action=="ever"):
                         logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action , in "+ctrl_obj[job].repeat_ifsatisfied_action)
                         logger ("Action: "+ctrl_obj[job].ifsatisfied_action)
-                        subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        os.system(ctrl_obj[job].ifsatisfied_action+" > /dev/null")
                         if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                             os.remove(dirtmp+'OK_'+tmpfile)
                         touch(dirtmp+'KO_'+tmpfile)
@@ -847,7 +847,7 @@ def jobexecute(job,startprobe):
                     if (tfile >=ctrl_obj[job].rearm_after):
 
 
-                            subprocess.call([ctrl_obj[job].rearm_action.split(' ',1)[0],ctrl_obj[job].rearm_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            os.system(ctrl_obj[job].rearm_action+"> /dev/null")
                             logger ("Controller "+ctrl_obj[job].controllername_id+" has been rearmed!")
                             logger ("Controller "+ctrl_obj[job].controllername_id+" has started the rearm action ")
                             logger ("Action:"+ctrl_obj[job].rearm_action)
@@ -874,7 +874,7 @@ def jobexecute(job,startprobe):
             if (ctrl_obj[job].ifnotsatisfied_action) and not(os.path.exists(dirtmp+'KO_'+tmpfile)) and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="once"):
                     logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifnotsatisfied_action , in "+ctrl_obj[job].repeat_ifnotsatisfied_action)
                     logger ("Action: "+ctrl_obj[job].ifnotsatisfied_action)
-                    subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    os.system(ctrl_obj[job].ifnotsatisfied_action+"> /dev/null")
                     if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                         os.remove(dirtmp+'OK_'+tmpfile)
                     touch(dirtmp+'KO_'+tmpfile)
@@ -882,7 +882,7 @@ def jobexecute(job,startprobe):
             if (ctrl_obj[job].ifnotsatisfied_action)  and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="ever"):
                     logger ("Controller "+ctrl_obj[job].controllername_id+" has started has started the ifnotsatisfied_action, in "+ctrl_obj[job].repeat_ifnotsatisfied_action)
                     logger ("Action: "+ctrl_obj[job].ifnotsatisfied_action)
-                    subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    os.system(ctrl_obj[job].ifnotsatisfied_action+"> /dev/null")
                     if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                         os.remove(dirtmp+'OK_'+tmpfile)
                     touch(dirtmp+'KO_'+tmpfile)
@@ -928,7 +928,7 @@ def jobexecutesilent(job,startprobe):
 
 
 
-                probe_obj[i].lastresult=subprocess.call([probe_obj[i].probefile.split(' ',1)[0],probe_obj[i].probefile.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                probe_obj[i].lastresult=os.system(probe_obj[i].probefile+" > /dev/null")
 
                 #Condition valorizing
                 ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
@@ -944,13 +944,13 @@ def jobexecutesilent(job,startprobe):
 
             if ctrl_obj[job].rearm_after == 0:
                 if (ctrl_obj[job].ifsatisfied_action) and not(os.path.exists(dirtmp+'OK_'+tmpfile)) and  (ctrl_obj[job].repeat_ifsatisfied_action=="once"):
-                        subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        os.system(ctrl_obj[job].ifsatisfied_action+" > /dev/null")
                         if (os.path.exists(dirtmp+'KO_'+tmpfile)):
                             os.remove(dirtmp+'KO_'+tmpfile)
                         touch(dirtmp+'OK_'+tmpfile)
 
                 if (ctrl_obj[job].ifsatisfied_action) and  (ctrl_obj[job].repeat_ifsatisfied_action=="ever"):
-                        subprocess.call([ctrl_obj[job].ifsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        os.system(ctrl_obj[job].ifsatisfied_action+" > /dev/null")
                         if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                             os.remove(dirtmp+'OK_'+tmpfile)
                         touch(dirtmp+'KO_'+tmpfile)
@@ -969,7 +969,7 @@ def jobexecutesilent(job,startprobe):
                     if (tfile >=ctrl_obj[job].rearm_after):
 
 
-                            subprocess.call([ctrl_obj[job].rearm_action.split(' ',1)[0],ctrl_obj[job].rearm_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            os.system(ctrl_obj[job].rearm_action+" > /dev/null")
                             files = os.listdir(dirtmp)
                             for f in files:
 
@@ -989,13 +989,13 @@ def jobexecutesilent(job,startprobe):
 
 
             if (ctrl_obj[job].ifnotsatisfied_action) and not(os.path.exists(dirtmp+'KO_'+tmpfile)) and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="once"):
-                    subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    os.system(ctrl_obj[job].ifnotsatisfied_action+" > /dev/null")
                     if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                         os.remove(dirtmp+'OK_'+tmpfile)
                     touch(dirtmp+'KO_'+tmpfile)
 
             if (ctrl_obj[job].ifnotsatisfied_action)  and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="ever"):
-                    subprocess.call([ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[0],ctrl_obj[job].ifnotsatisfied_action.split(' ',1)[1]],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    os.system(ctrl_obj[job].ifnotsatisfied_action+" > /dev/null")
                     if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                         os.remove(dirtmp+'OK_'+tmpfile)
                     touch(dirtmp+'KO_'+tmpfile)
