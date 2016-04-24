@@ -27,7 +27,7 @@ global msg
 global controllercounter
 global probecounter
 global dbcounter
-
+global dbcondition
 
 
 #controller
@@ -36,7 +36,7 @@ probe_obj = []
 database_obj = []
 startuplist = {}
 dirtmp="/tmp/"
-
+dbcondition=0
 
 
 
@@ -515,7 +515,7 @@ def jobsimulation(job,startprobe):
 
 
         print "--->Verifing conditions "+ctrl_obj[job].condition
-        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,dbindex)
+        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,dbcondition)
 
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
 
@@ -539,14 +539,14 @@ def jobsimulation(job,startprobe):
 
     except:
 
-    #    print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
+        print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
         print
 
 
 
 def executesql (sql,dbindex):
-
+        
 
         try:
 
@@ -810,7 +810,7 @@ def jobexecute(job,startprobe):
         i =+1
 
 
-        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,1)
+        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,dbcondition)
 
         #Condition satisfied
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
@@ -936,7 +936,7 @@ def jobexecutesilent(job,startprobe):
         i =+1
 
 
-        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,1)
+        ctrl_obj[job].lastresult=executesql(ctrl_obj[job].condition,dbcondition)
 
         #Condition satisfied
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
