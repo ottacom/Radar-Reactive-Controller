@@ -16,12 +16,12 @@
                                   }],
                           "condition":"select (mplsin <= 8) or (mplsout >= 8)",
                           "expected_value":"False",
-                          "ifsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
-                          "ifnotsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
+                          "ifsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh,www.cisco.com",
+                          "ifnotsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh,www.cisco.com",
                           "repeat_ifsatisfied_action":"once",
                           "repeat_ifnotsatisfied_action":"ever",
                           "rearm_after": 2,
-                          "rearm_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com"
+                          "rearm_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh,www.cisco.com"
                         },{
                         "controllername_id":"Saturation Colt-Roma",
                         "probeset":[{
@@ -38,7 +38,7 @@
                           "condition":"select (coltin >= 18) or (coltout >= 18)",
                           "expected_value":"False",
                           "ifsatisfied_action": "",
-                          "ifnotsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh www.cisco.com",
+                          "ifnotsatisfied_action": "/Users/ottacom/Documents/CODING/Radar-Reactive-Controller/scripts/ping_test.sh,www.cisco.com",
                           "repeat_ifsatisfied_action":"",
                           "repeat_ifnotsatisfied_action":"once",
                           "rearm_after": 0,

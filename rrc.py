@@ -14,7 +14,7 @@ from or_class import *
 import MySQLdb
 import argparse
 import fnmatch
-
+import syslog
 #Global definitions
 global configfile
 global databasefile
@@ -174,12 +174,12 @@ def objectbuilder():
             row_ctrl['controllername_id'],
             row_ctrl['condition'],
             row_ctrl['expected_value'],
-            row_ctrl['ifsatisfied_action'],
-            row_ctrl['ifnotsatisfied_action'],
+            parsecommand(row_ctrl['ifsatisfied_action']),
+            parsecommand(row_ctrl['ifnotsatisfied_action']),
             row_ctrl['repeat_ifsatisfied_action'],
             row_ctrl['repeat_ifnotsatisfied_action'],
             row_ctrl['rearm_after'],
-            row_ctrl['rearm_action'],
+            parsecommand(row_ctrl['rearm_action']),
             totalprobes,controllercounter,lastresult))
 
             controllercounter +=1
@@ -191,7 +191,7 @@ def objectbuilder():
                 row_ctrl['probeset'][pbindex]['probename_id'],
                 row_ctrl['probeset'][pbindex]['sql'],
                 row_ctrl['probeset'][pbindex]['sqlengine'],
-                row_ctrl['probeset'][pbindex]['probefile'],
+                parsecommand(row_ctrl['probeset'][pbindex]['probefile']),
                 controllercounter-1,pbindex,abs_probeindex,lastresult))
                 pbindex +=1
                 probecounter +=1
@@ -266,32 +266,35 @@ def chkrange(c,val,min,max,attribute):
         return False
 
 def chkoptions(c,val,options,attribute):
-    if (val in options) and val:
+    if "null" in options and val == "":
         return True
     else:
-        print "\n\nnogo: The "+attribute+" needs to be "+options+"\n"
+        if (val in options) and val:
+            return True
+        else:
+            print "\n\nnogo: The "+attribute+" needs to be "+options+"\n"
 
-        return False
+            return False
 
 
 
 
 def chkfile(filename,section):
     #ignoring paramenters
-    filename =filename.split(' ',1)[0]
 
 
+        filename =filename.split(' ',1)[0].replace("\"","")
+        if ((os.path.exists(filename) and os.access(filename, os.X_OK)) and (filename.find("/") != -1)) or filename =="" :
 
-    if ((os.path.exists(filename) and os.access(filename, os.X_OK)) and (filename.find("/") != -1)) or filename =="" :
+            return True
 
-        return True
+        else:
 
-    else:
+            print "\n\nnogo: The file named "+filename+" definend on "+section+" must meet three requirements:"
+            print "nogo: Existent executable and needs absolute path\n"
 
-        print "\n\nnogo: The file named "+filename+" definend on "+section+" must meet three requirements:"
-        print "\nnogo: Existent executable and needs absolute path\n"
 
-        return False
+            return False
 
 
 
@@ -309,7 +312,7 @@ def checklogiccontroller(c):
             return False
         else:
             if (ctrl_obj[c].condition) == False:
-                print "\nno go: All conditions mut be set"
+                print "\nno go: All conditions must be set"
                 return False
             else:
                 if (ctrl_obj[c].expected_value) == False:
@@ -331,7 +334,7 @@ def checklogiccontroller(c):
                                     if chkfile(ctrl_obj[c].rearm_action,ctrl_obj[c].controllername_id) == False:
                                         return False
                                     else:
-                                        options="once,ever"
+                                        options="once,ever,null"
                                         if ctrl_obj[c].ifsatisfied_action and chkoptions(c,ctrl_obj[c].repeat_ifsatisfied_action,options,'repeat_ifsatisfied_action') == False:
                                             return False
                                         else:
@@ -357,7 +360,7 @@ def checklogicprobe(i):
                     return False
                 else:
 
-                    if  (probe_obj[i].sql) and (probe_obj[i].probefile) :
+                    if  (probe_obj[i].sql) and (probe_obj[i].probefile):
                         print "\n\nno go:Can not use dirctive sql and probefile togheter on "+probe_obj[i].probename_id;
                         print
 
@@ -698,35 +701,35 @@ def simulation():
 def production(silent):
     defaultmsg="Something is going wrong.. please check you configuration using -m simulation"
     if silent == False:
-        logger ("Starting RRC")
+        logger ("Starting RRC","alert")
 
         if loadconfig(configfile) == True:
 
-            logger ("Inizializing....")
+            logger ("Inizializing....","alert")
         else:
-            logger (defaultmsg)
+            logger (defaultmsg,"err")
             quit()
 
         if objectbuilder() == True:
-            logger ("Workflow created..")
+            logger ("Workflow created..","alert")
         else:
-            logger (defaultmsg)
+            logger (defaultmsg,"err")
             quit()
 
         if loadconfig(databasefile) == True:
-            logger ("Inizializing database")
+            logger ("Inizializing database","alert")
         else:
-            logger (defaultmsg)
+            logger (defaultmsg,"err")
             quit()
 
         if dbobjectbuilder() == True:
-            logger ("Database Connection created....")
+            logger ("Database Connection created....","alert")
         else:
-            logger (defaultmsg)
+            logger (defaultmsg,"err")
             quit()
 
 
-        logger ("RRC has been started")
+        logger ("RRC has been started","alert")
         startprobe=0
         for i in range(0,controllercounter):
             p=0
@@ -739,7 +742,7 @@ def production(silent):
 
         i +=1
 
-        logger ("RRC is terminated")
+        logger ("RRC is terminated","alert")
 
     else:
 
@@ -815,19 +818,19 @@ def jobexecute(job,startprobe):
         #Condition satisfied
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
 
-            logger("Controller "+ctrl_obj[job].controllername_id+" is satisfied")
+            logger("Controller "+ctrl_obj[job].controllername_id+" is satisfied","alert")
             if ctrl_obj[job].rearm_after == 0:
                 if (ctrl_obj[job].ifsatisfied_action) and not(os.path.exists(dirtmp+'OK_'+tmpfile)) and  (ctrl_obj[job].repeat_ifsatisfied_action=="once"):
-                        logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action)
-                        logger ("Action: "+ctrl_obj[job].ifsatisfied_action)
+                        logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action,"alert")
+                        logger ("Action: "+ctrl_obj[job].ifsatisfied_action,"alert")
                         os.system(ctrl_obj[job].ifsatisfied_action+"> /dev/null")
                         if (os.path.exists(dirtmp+'KO_'+tmpfile)):
                             os.remove(dirtmp+'KO_'+tmpfile)
                         touch(dirtmp+'OK_'+tmpfile)
 
                 if (ctrl_obj[job].ifsatisfied_action) and  (ctrl_obj[job].repeat_ifsatisfied_action=="ever"):
-                        logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action , in "+ctrl_obj[job].repeat_ifsatisfied_action)
-                        logger ("Action: "+ctrl_obj[job].ifsatisfied_action)
+                        logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action , in "+ctrl_obj[job].repeat_ifsatisfied_action,"alert")
+                        logger ("Action: "+ctrl_obj[job].ifsatisfied_action,"alert")
                         os.system(ctrl_obj[job].ifsatisfied_action+" > /dev/null")
                         if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                             os.remove(dirtmp+'OK_'+tmpfile)
@@ -838,21 +841,21 @@ def jobexecute(job,startprobe):
                 #REARM
                 if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value) and ctrl_obj[job].rearm_after > 0 and (os.path.exists(dirtmp+'KO_'+tmpfile)):
                     totalfile=""
-                    logger ("Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied_action")
+                    logger ("Rearm after "+str(ctrl_obj[job].rearm_after)+" times satisfied_action","alert")
                     totalfile=len(fnmatch.filter(os.listdir(dirtmp), '*.'+tmpfile))
                     tfile=int(totalfile)+1
                     touch(dirtmp+str(tfile)+'.'+tmpfile)
                     toleft=ctrl_obj[job].rearm_after-tfile
-                    logger ("Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" times satisfied, "+str(toleft)+" left")
+                    logger ("Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" times satisfied, "+str(toleft)+" left","alert")
                     if (tfile >=ctrl_obj[job].rearm_after):
 
 
                             os.system(ctrl_obj[job].rearm_action+"> /dev/null")
-                            logger ("Controller "+ctrl_obj[job].controllername_id+" has been rearmed!")
-                            logger ("Controller "+ctrl_obj[job].controllername_id+" has started the rearm action ")
+                            logger ("Controller "+ctrl_obj[job].controllername_id+" has been rearmed!","alert")
+                            logger ("Controller "+ctrl_obj[job].controllername_id+" has started the rearm action ","alert")
                             logger ("Action:"+ctrl_obj[job].rearm_action)
-                            logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action)
-                            logger ("Action: "+ctrl_obj[job].ifsatisfied_action)
+                            logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action,"alert")
+                            logger ("Action: "+ctrl_obj[job].ifsatisfied_action,"alert")
                             files = os.listdir(dirtmp)
                             for f in files:
 
@@ -872,16 +875,16 @@ def jobexecute(job,startprobe):
             print "Controller "+ctrl_obj[job].controllername_id+" is not satisfied"
 
             if (ctrl_obj[job].ifnotsatisfied_action) and not(os.path.exists(dirtmp+'KO_'+tmpfile)) and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="once"):
-                    logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifnotsatisfied_action , in "+ctrl_obj[job].repeat_ifnotsatisfied_action)
-                    logger ("Action: "+ctrl_obj[job].ifnotsatisfied_action)
+                    logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifnotsatisfied_action , in "+ctrl_obj[job].repeat_ifnotsatisfied_action,"alert")
+                    logger ("Action: "+ctrl_obj[job].ifnotsatisfied_action,"alert")
                     os.system(ctrl_obj[job].ifnotsatisfied_action+"> /dev/null")
                     if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                         os.remove(dirtmp+'OK_'+tmpfile)
                     touch(dirtmp+'KO_'+tmpfile)
 
             if (ctrl_obj[job].ifnotsatisfied_action)  and  (ctrl_obj[job].repeat_ifnotsatisfied_action=="ever"):
-                    logger ("Controller "+ctrl_obj[job].controllername_id+" has started has started the ifnotsatisfied_action, in "+ctrl_obj[job].repeat_ifnotsatisfied_action)
-                    logger ("Action: "+ctrl_obj[job].ifnotsatisfied_action)
+                    logger ("Controller "+ctrl_obj[job].controllername_id+" has started has started the ifnotsatisfied_action, in "+ctrl_obj[job].repeat_ifnotsatisfied_action,"alert")
+                    logger ("Action: "+ctrl_obj[job].ifnotsatisfied_action,"alert")
                     os.system(ctrl_obj[job].ifnotsatisfied_action+"> /dev/null")
                     if (os.path.exists(dirtmp+'OK_'+tmpfile)):
                         os.remove(dirtmp+'OK_'+tmpfile)
@@ -894,7 +897,7 @@ def jobexecute(job,startprobe):
 
 
    except:
-
+        logger ("Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query","crit")
         print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
         print
@@ -1007,7 +1010,6 @@ def jobexecutesilent(job,startprobe):
 
         print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
-        print
 
 
 
@@ -1018,9 +1020,21 @@ def touch(fname, times=None):
     finally:
         fhandle.close()
 
-def logger(message):
+def logger(message,priority):
         print message
-        subprocess.call(["logger",message],stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        os.system("logger -i -p "+priority+" "+message)
+
+def parsecommand(command):
+
+        if (command):
+            command=command.replace(",","\" \"")
+            command="\""+command+"\""
+            return command
+
+        else:
+
+            return command
+
 
 
 ##############################################################
