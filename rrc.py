@@ -900,7 +900,7 @@ def jobexecute(job,startprobe):
         print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
         print
-
+        quit()
 
 
 def jobexecutesilent(job,startprobe):
@@ -1009,7 +1009,7 @@ def jobexecutesilent(job,startprobe):
 
         print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
-
+        quit()
 
 
 def touch(fname, times=None):
