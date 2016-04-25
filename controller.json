@@ -78,7 +78,7 @@
                                   "probefile": ""
                                   }],
                           "condition":"select (GOin >= 12) or (Goout >= 12)",
-                          "expected_value":"False",
+                          "expected_value":"1",
                           "ifsatisfied_action": "",
                           "ifnotsatisfied_action": "",
                           "repeat_ifsatisfied_action":"",

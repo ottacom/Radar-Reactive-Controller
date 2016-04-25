@@ -2,7 +2,6 @@
 #needs pip install schedule
 import json
 import sys
-import time
 import threading
 import os
 import subprocess
@@ -846,21 +845,21 @@ def jobexecute(job,startprobe):
                     tfile=int(totalfile)+1
                     touch(dirtmp+str(tfile)+'.'+tmpfile)
                     toleft=ctrl_obj[job].rearm_after-tfile
-                    logger ("Controller "+ctrl_obj[job].controllername_id+" has rearmed after "+str(ctrl_obj[job].rearm_after)+" times satisfied, "+str(toleft)+" left","alert")
+                    logger ("Controller "+ctrl_obj[job].controllername_id+" has been rearmed after "+str(ctrl_obj[job].rearm_after)+" times satisfied "+str(toleft)+" left","alert")
                     if (tfile >=ctrl_obj[job].rearm_after):
 
 
                             os.system(ctrl_obj[job].rearm_action+"> /dev/null")
                             logger ("Controller "+ctrl_obj[job].controllername_id+" has been rearmed!","alert")
                             logger ("Controller "+ctrl_obj[job].controllername_id+" has started the rearm action ","alert")
-                            logger ("Action:"+ctrl_obj[job].rearm_action)
+                            logger ("Action:"+ctrl_obj[job].rearm_action,"notice")
                             logger ("Controller "+ctrl_obj[job].controllername_id+" has started the ifsatisfied_action in "+ctrl_obj[job].repeat_ifsatisfied_action,"alert")
                             logger ("Action: "+ctrl_obj[job].ifsatisfied_action,"alert")
                             files = os.listdir(dirtmp)
                             for f in files:
 
                               if not os.path.isdir(f) and tmpfile in f:
-
+                                print dirtmp+f
                                 os.remove(dirtmp+f)
 
 
@@ -900,7 +899,7 @@ def jobexecute(job,startprobe):
         logger ("Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query","crit")
         print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
-        print
+    
 
 
 
