@@ -899,7 +899,7 @@ def jobexecute(job,startprobe):
         logger ("Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query","crit")
         print "\n\n!!!!!!!!!!!!Unrecovable problem occured: Ouch... something is going wrong please check your scripts and sql query"
         print
-    
+        print
 
 
 
