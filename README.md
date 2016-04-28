@@ -1,4 +1,5 @@
 # Radar-Reactive-Controller For Observium (and general purpose)
+...In ohter words.. A swiss knife to keep the infrastructure under control
 
 What's that?
 Radar Reactive controller is a phytonic application to keep safe your business.
