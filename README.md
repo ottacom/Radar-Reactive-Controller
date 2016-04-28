@@ -9,7 +9,7 @@ The RRC's aim is to have always the situation under control.
 
 
 
-#Quick guide (For impatient, please take a look inside the file)
+#Quick guide (for impatient, please take a look inside the file)
 
 What you need:
 .Mysql instance (local or remote, of course you can use the observium instance)
