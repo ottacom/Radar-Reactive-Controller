@@ -38,7 +38,7 @@ Description of controller.json syntax example
                   "rearm_action": script (syntax is ex: /tmp/switc.sh,par1,par2,etc)
 
 Important:
-The first DB configured in database.json will be used for check conditions
+The first DB configured in database.json it will be used for check conditions
 
 
 #Check file syntax (Mandatory)
