@@ -67,8 +67,11 @@ Please remind the first database configured will be used for check condition
 
 #Example guide and use
 
-Please edit controller.json like this
+
 consider to use Observium
+
+Edit database.json:
+
 
 {
         "controllerset":
