@@ -12,9 +12,9 @@ The RRC's aim is to have always the situation under control.
 #Quick guide (For impatient, please take a look inside the file)
 
 What you need:
--Mysql instance (local or remote, of course you can use the observium instance)
--The controller.json file - The configuration file of the system
--The database.json file - The db instance file
+.Mysql instance (local or remote, of course you can use the observium instance)
+.The controller.json file - The configuration file of the system
+.The database.json file - The db instance file
 
 #The controller.json file
 
@@ -37,7 +37,8 @@ Description of controller.json syntax example
                   "rearm_after": 0= no rearm, > 1 = times satisfied
                   "rearm_action": script (syntax is ex: /tmp/switc.sh,par1,par2,etc)
 
-
+Important:
+The first DB configured in database.json will be used for check conditions
 
 
 #Check file syntax (Mandatory)
