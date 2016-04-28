@@ -521,11 +521,11 @@ def jobsimulation(job,startprobe):
 
         if str(ctrl_obj[job].lastresult) == str(ctrl_obj[job].expected_value):
 
-            print "--->Condition is satisfied_action we got "+str(ctrl_obj[job].lastresult)+" and we expected "+str(ctrl_obj[job].expected_value)
+            print "--->Condition is satisfied we got "+str(ctrl_obj[job].lastresult)+" and we expected "+str(ctrl_obj[job].expected_value)
             if (ctrl_obj[job].ifsatisfied_action):
                 print "--->This is a simulation and I don't start "+str(ctrl_obj[job].ifsatisfied_action)+",I will do that outside the simulation"
         else :
-            print "--->Condition is not satisfied_action we got "+str(ctrl_obj[job].lastresult)+" but we expected "+str(ctrl_obj[job].expected_value)
+            print "--->Condition is not satisfied we got "+str(ctrl_obj[job].lastresult)+" but we expected "+str(ctrl_obj[job].expected_value)
             if (ctrl_obj[job].ifnotsatisfied_action):
                 print "--->This is a simulation and I don't start "+ctrl_obj[job].ifnotsatisfied_action+",I will do that outside the simulation"
                 #open(dirtmp+, ctrl_obj[job].controllername_id.false).close()
