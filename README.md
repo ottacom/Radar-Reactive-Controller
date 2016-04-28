@@ -4,7 +4,7 @@
 What's that?
 Radar Reactive controller is a phytonic application to keep safe your business.
 Basically you can control whatever you want using scripts and/or sql query check on databases
-I made RRC in order to make some check on my customers, without having false positive/negative
+I made RRC in order to have some checks on my customers, without false positive/negative
 The RRC's aim is to have always the situation under control.
 
 
