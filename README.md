@@ -26,7 +26,7 @@ Description of controller.json syntax example
                           "probename_id": probename (PrimaryKey uinque)
                           "sql": sql query
                           "sqlengine" : the sql engine in use defined in database.json
-                          "probefile": the script to star (if you use this one you cant use sql)
+                          "probefile": the script to start (if you use this one you can't use sql)
                           }
                   "condition": sql condition
                   "expected_value": value out from sql condition
