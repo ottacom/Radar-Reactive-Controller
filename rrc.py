@@ -804,8 +804,8 @@ def jobexecute(job,startprobe):
 
 
 
-                probe_obj[i].lastresult=os.system(probe_obj[i].probefile)
-
+                #probe_obj[i].lastresult=os.system(probe_obj[i].probefile)
+                probe_obj[i].lastresult=subprocess.check_output(probe_obj[i].probefile, shell=True)
                 #Condition valorizing
                 ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
 
@@ -930,7 +930,8 @@ def jobexecutesilent(job,startprobe):
 
 
 
-                probe_obj[i].lastresult=os.system(probe_obj[i].probefile+" > /dev/null")
+                #probe_obj[i].lastresult=os.system(probe_obj[i].probefile+" > /dev/null")
+                probe_obj[i].lastresult=subprocess.check_output(probe_obj[i].probefile, shell=True)
 
                 #Condition valorizing
                 ctrl_obj[job].condition=ctrl_obj[job].condition.replace(str(probe_obj[i].probename_id),str(probe_obj[i].lastresult))
